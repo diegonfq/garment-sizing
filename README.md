@@ -1,4 +1,4 @@
-# Size chart
+# Size chart 
 
 A Python-based tool for creating and managing dynamic garment sizing charts using Polars. 
 

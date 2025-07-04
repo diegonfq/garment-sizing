@@ -38,3 +38,7 @@ version = "0.1.0" # This should match the version at the top of the file
 update_changelog_on_bump = true
 major_version_zero = true
 
+[tool.pytest.ini_options]
+pythonpath = [
+  "src"
+]

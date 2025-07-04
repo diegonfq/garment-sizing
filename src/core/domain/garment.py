@@ -54,7 +54,7 @@ class Garment:
         unordered_df = deltas_df.pivot(
             values="delta_value",
             index="Measurement",
-            columns="size"
+            on="size"
         )
 
         # Reorder

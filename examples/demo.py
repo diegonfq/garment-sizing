@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
 import os
-from src.core.domain.sizes import Garment
+from src.core.domain.garment import Garment
 from src.core.domain.models import Base
 
 import logging

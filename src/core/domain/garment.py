@@ -51,11 +51,15 @@ class Garment:
             return pl.DataFrame({"Measurement": []})
 
         deltas_df = pl.DataFrame(data)
-        return deltas_df.pivot(
+        unordered_df = deltas_df.pivot(
             values="delta_value",
             index="Measurement",
             columns="size"
         )
+
+        # Reorder
+        size_order = ["XS", "S", "M", "L", "XL"]
+        return unordered_df.select(["Measurement"] + size_order)
 
     def _calculate_sizes(self):
         base_numeric = self.base.select(cs.numeric())
@@ -209,16 +213,3 @@ class Garment:
         if garment_to_delete:
             db_session.delete(garment_to_delete)
             db_session.commit()
-
-# class Tshirt(Garment):
-#     def __init__(self, base_size="M"):
-#         tshirt_labels = ["Shoulder width", "Chest circumference", "Waist circumference", "Hip circumference"]
-#         tshirt_base_values = [46.0, 110.0, 102.0, 108.0]
-#         tshirt_delta_rules = [2.0, 4.0, 3.0, 3.0]
-#
-#         super().__init__(
-#             measurement_labels=tshirt_labels,
-#             base_measurements=tshirt_base_values,
-#             default_deltas=tshirt_delta_rules,
-#             base_size=base_size
-#         )

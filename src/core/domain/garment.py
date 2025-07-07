@@ -4,6 +4,8 @@ import os
 import json
 import logging
 from pathlib import Path
+
+from .exceptions import GarmentNotFoundError
 from .models import Garment as GarmentModel, BaseMeasurement, Delta
 from sqlalchemy.orm import Session
 
@@ -190,6 +192,12 @@ class Garment:
     @staticmethod
     def create_new_garment(db_session: Session, garment_type: str, base_size: str, measurements: dict, deltas: dict):
         """A static method to create a brand new garment in the database."""
+
+        garment_already_exists = db_session.query(GarmentModel).filter_by(garment_type=garment_type).one_or_none()
+
+        if garment_already_exists:
+            raise DuplicateGarmentError(f"{garment_type} already in database.")
+
         new_garment = GarmentModel(garment_type=garment_type, base_size=base_size)
         db_session.add(new_garment)
 
@@ -210,6 +218,8 @@ class Garment:
         """Finds and removes a garment and all its associated data from the database."""
         garment_to_delete = db_session.query(GarmentModel).filter_by(id=garment_id).one_or_none()
 
-        if garment_to_delete:
-            db_session.delete(garment_to_delete)
-            db_session.commit()
+        if not garment_to_delete:
+            raise GarmentNotFoundError(f"Garment with ID {garment_id} not found.")
+
+        db_session.delete(garment_to_delete)
+        db_session.commit()

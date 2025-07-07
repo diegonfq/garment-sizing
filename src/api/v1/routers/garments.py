@@ -4,6 +4,7 @@ from typing import List
 
 from .. import schemas, dependencies
 from src.core.domain.garment import Garment
+import src.core.domain.exceptions as exceptions
 from src.core.domain.models import Garment as GarmentModel
 
 router = APIRouter()
@@ -15,22 +16,18 @@ def read_root():
 @router.post("/garments/", response_model=schemas.GarmentReadBasic, status_code=201)
 def create_garment(garment_data: schemas.GarmentCreate, db: Session = Depends(dependencies.get_db)):
     garment_type = garment_data.garment_type.lower()
-    if "spam" in garment_type:
-        raise HTTPException(status_code=403, detail="Spam")
 
-    existing_garment = db.query(GarmentModel).filter(
-        GarmentModel.garment_type == garment_type
-    ).first()
-    if existing_garment:
-        raise HTTPException(status_code=409, detail=f"A garment with type '{garment_data.garment_type}' already exists.")
 
-    new_garment_id = Garment.create_new_garment(
-        db_session=db,
-        garment_type=garment_type,
-        base_size=garment_data.base_size,
-        measurements=garment_data.measurements,
-        deltas=garment_data.deltas
-    )
+    try:
+        new_garment_id = Garment.create_new_garment(
+            db_session=db,
+            garment_type=garment_type,
+            base_size=garment_data.base_size,
+            measurements=garment_data.measurements,
+            deltas=garment_data.deltas
+        )
+    except exceptions.DuplicateGarmentError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
     db_garment = db.query(GarmentModel).filter(GarmentModel.id == new_garment_id).one()
     return db_garment
@@ -63,13 +60,10 @@ def read_garment_spec(garment_id: int, db: Session = Depends(dependencies.get_db
 
 @router.delete("/garments/{garment_id}", status_code=204)
 def remove_garment(garment_id: int, db: Session = Depends(dependencies.get_db)):
-    existing_garment = db.query(GarmentModel).filter(
-        GarmentModel.id == garment_id
-    ).first()
-    if not existing_garment:
-        raise HTTPException(status_code=404,
-                            detail=f"No garment with id {garment_id} found.")
-    Garment.remove_garment(db, garment_id)
+    try:
+        Garment.remove_garment(db, garment_id)
+    except exceptions.GarmentNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
     return
 

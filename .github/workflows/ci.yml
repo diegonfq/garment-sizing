@@ -1,0 +1,59 @@
+name: Continuous Integration
+
+# This section defines when the workflow will run.
+on:
+  push:
+    branches: [ "master", "main", "develop" ]
+  pull_request:
+    branches: [ "master", "main", "develop" ]
+
+jobs:
+  test:
+    # The name of the job, which will appear on GitHub
+    name: Run Tests on Python ${{ matrix.python-version }}
+
+    # This job will run on the latest version of Ubuntu
+    runs-on: ubuntu-latest
+
+    # This creates a "matrix" of jobs, running the same steps
+    # for each specified Python version.
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+
+    steps:
+      # Step 1: Check out your repository's code
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up the specified version of Python
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Step 3: Cache dependencies to speed up future runs
+      - name: Get pip cache dir
+        id: pip-cache
+        run: |
+          echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # Step 4: Install your project's dependencies
+      # This includes the main dependencies and the 'dev' optional dependencies
+      # like pytest and alembic.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+
+      # Step 5: Run your test suite using pytest
+      - name: Run tests
+        run: |
+          pytest

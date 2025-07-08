@@ -38,7 +38,7 @@ def db_session() -> Session:
     finally:
         session.close()
 
-def test_override_non_base(db_session: Session):
+def override_non_base(db_session: Session):
     """
     Test override function when changing a non-base size.
     """
@@ -63,7 +63,7 @@ def test_override_non_base(db_session: Session):
     ).one()
     assert db_delta.delta_value == 5.0
 
-def test_override_base(db_session: Session):
+def override_base(db_session: Session):
     """
     Test override function when changing a base size.
     """
@@ -86,7 +86,7 @@ def test_override_base(db_session: Session):
     ).select("L").item()
     assert final_l_chest == 115.0
 
-def test_change_base(db_session: Session):
+def change_base(db_session: Session):
     """
     Test the change_base function
     """

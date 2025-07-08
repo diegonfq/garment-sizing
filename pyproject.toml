@@ -25,6 +25,8 @@ dependencies = [
 dev = [
     "commitizen",
     "pre-commit",
+    "fastapi",
+    "uvicorn[standard]",
 ]
 
 # --- Tool Configurations ---

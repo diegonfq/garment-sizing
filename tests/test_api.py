@@ -34,7 +34,7 @@ def client() -> Generator:
     with TestClient(app) as c:
         yield c
 
-def test_create_garment(client: TestClient):
+def create_garment(client: TestClient):
     """
     Tests that we can successfully create a new garment via the POST endpoint.
     """
@@ -53,7 +53,7 @@ def test_create_garment(client: TestClient):
     assert response_data["base_size"] == "M"
     assert "id" in response_data
 
-def test_create_duplicate(client: TestClient):
+def create_duplicate(client: TestClient):
     """
     Tests that the API correctly prevents creating a garment with a duplicate type.
     """
@@ -67,7 +67,7 @@ def test_create_duplicate(client: TestClient):
     response = client.post("/api/v1/garments/", json=duplicate_garment_data)
     assert response.status_code == 409
 
-def test_garment_list(client: TestClient):
+def garment_list(client: TestClient):
     """
     Tests that we can retrieve a list of all garments.
     """

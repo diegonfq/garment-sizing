@@ -1,8 +1,8 @@
-"""Create initial garment tables
+"""Initial schema
 
-Revision ID: 99034f84761b
+Revision ID: b765b90c0e92
 Revises: 
-Create Date: 2025-07-02 13:32:20.437678
+Create Date: 2025-07-17 09:43:33.463343
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '99034f84761b'
+revision: str = 'b765b90c0e92'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -25,7 +25,9 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('garment_type', sa.String(), nullable=False),
     sa.Column('base_size', sa.String(), nullable=False),
-    sa.PrimaryKeyConstraint('id')
+    sa.Column('sizes_to_order', sa.JSON(), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('garment_type')
     )
     op.create_table('base_measurements',
     sa.Column('id', sa.Integer(), nullable=False),

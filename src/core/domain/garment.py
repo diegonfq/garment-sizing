@@ -3,11 +3,13 @@ import polars.selectors as cs
 import os
 import json
 import logging
-from pathlib import Path
 
 from .exceptions import GarmentNotFoundError
 from .models import Garment as GarmentModel, BaseMeasurement, Delta
 from sqlalchemy.orm import Session
+from typing import List
+
+from .exceptions import *
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -17,6 +19,7 @@ class Garment:
         self.session = db_session
         self.garment_model = self.session.query(GarmentModel).filter_by(id=garment_id).one()
 
+        self.sizes_to_order = self.garment_model.sizes_to_order
         self.base_size = self.garment_model.base_size
 
         self.refresh_dataframes()
@@ -190,7 +193,7 @@ class Garment:
         return garments
 
     @staticmethod
-    def create_new_garment(db_session: Session, garment_type: str, base_size: str, measurements: dict, deltas: dict):
+    def create_new_garment(db_session: Session, garment_type: str, base_size: str, sizes_to_order: List[str], measurements: dict, deltas: dict):
         """A static method to create a brand new garment in the database."""
 
         garment_already_exists = db_session.query(GarmentModel).filter_by(garment_type=garment_type).one_or_none()
@@ -199,6 +202,7 @@ class Garment:
             raise DuplicateGarmentError(f"{garment_type} already in database.")
 
         new_garment = GarmentModel(garment_type=garment_type, base_size=base_size)
+        new_garment.sizes_to_order = sizes_to_order
         db_session.add(new_garment)
 
         for name, value in measurements.items():

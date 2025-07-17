@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 from typing import List
+import copy
 
 from .. import schemas, dependencies
 from src.core.domain.garment import Garment
@@ -13,16 +14,36 @@ router = APIRouter()
 def read_root():
     return {"Hola": "Mundo"}
 
+@router.patch("/garments/{garment_id}", response_model=schemas.GarmentReadBasic, status_code=200)
+def modify_garment(garment_id: int, garment_data: schemas.GarmentUpdate, db: Session = Depends(dependencies.get_db)):
+    db_garment = db.query(GarmentModel).filter(GarmentModel.id == garment_id).first()
+    if not db_garment:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    # Convert the incoming Pydantic model to a dictionary.
+    # `exclude_unset=True` is the most important part. It ensures we only
+    # get a dictionary of the fields the user actually sent in the request.
+    update_data = garment_data.model_dump(exclude_unset=True)
+
+    for key, value in update_data.items():
+        setattr(db_garment, key, value)
+
+    db.commit()
+    db.refresh(db_garment)
+
+    return db_garment
+
+
 @router.post("/garments/", response_model=schemas.GarmentReadBasic, status_code=201)
 def create_garment(garment_data: schemas.GarmentCreate, db: Session = Depends(dependencies.get_db)):
     garment_type = garment_data.garment_type.lower()
-
 
     try:
         new_garment_id = Garment.create_new_garment(
             db_session=db,
             garment_type=garment_type,
             base_size=garment_data.base_size,
+            sizes_to_order=garment_data.sizes_to_order,
             measurements=garment_data.measurements,
             deltas=garment_data.deltas
         )
@@ -54,6 +75,42 @@ def read_garment_spec(garment_id: int, db: Session = Depends(dependencies.get_db
         garment_type=garment_engine.garment_model.garment_type,
         base_size=garment_engine.garment_model.base_size,
         sizes=sizes_dict,
+        deltas=deltas_dict
+    )
+    return response
+
+@router.get("/garments/{garment_id}/to_order")
+def read_to_order_garments(garment_id: int, db: Session = Depends(dependencies.get_db)):
+    match = db.query(GarmentModel).filter(GarmentModel.id == garment_id).first()
+    if not match:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    garment_engine = Garment(db, garment_id)
+    sizes_list_of_dicts = garment_engine.sizes.to_dicts()
+    deltas_list_of_dicts = garment_engine.deltas.to_dicts()
+
+    sizes_to_calculate = garment_engine.sizes_to_order
+    if not sizes_to_calculate:
+        return {}
+
+    sizes_dict = {row['Measurement']: {k: v for k, v in row.items() if k != 'Measurement'} for row in
+                  sizes_list_of_dicts}
+    deltas_dict = {row['Measurement']: {k: v for k, v in row.items() if k != 'Measurement'} for row in
+                   deltas_list_of_dicts}
+
+    filtered_sizes_dict = copy.deepcopy(sizes_dict)
+
+    for measurement in sizes_dict.keys():
+        for size in sizes_dict[measurement].keys():
+            if size not in sizes_to_calculate:
+                filtered_sizes_dict[measurement].pop(size)
+                deltas_dict[measurement].pop(size)
+
+    response = schemas.GarmentFullSpec(
+        id=garment_engine.garment_model.id,
+        garment_type=garment_engine.garment_model.garment_type,
+        base_size=garment_engine.garment_model.base_size,
+        sizes=filtered_sizes_dict,
         deltas=deltas_dict
     )
     return response

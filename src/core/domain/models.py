@@ -7,6 +7,7 @@ from sqlalchemy import (
     ForeignKey
 )
 from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.types import JSON
 
 Base = declarative_base()
 
@@ -15,6 +16,7 @@ class Garment(Base):
     id = Column(Integer, primary_key=True)
     garment_type = Column(String, nullable=False, unique=True)
     base_size = Column(String, nullable=False)
+    sizes_to_order = Column(JSON, nullable=False, default=[])
     base_measurements = relationship("BaseMeasurement", back_populates="garment", cascade="all, delete-orphan")
     deltas = relationship("Delta", back_populates="garment", cascade="all, delete-orphan")
 

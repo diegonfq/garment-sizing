@@ -1,0 +1,46 @@
+# This is the main configuration file for your Python project.
+# It defines project metadata, dependencies, and tool settings.
+
+[project]
+name = "garment-sizer"
+version = "0.1.0"
+description = "A dynamic engine for creating and managing garment sizing charts with a database backend."
+authors = [
+    {name = "Diego Hurtado", email = "diego.hurtado@nfq.es"},
+]
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+
+# Core dependencies required for the application to run.
+dependencies = [
+    "polars",
+    "sqlalchemy",
+    "alembic",
+]
+
+[project.optional-dependencies]
+# Development dependencies needed for testing, linting, and committing.
+# You can install these with: pip install -e .[dev]
+dev = [
+    "commitizen",
+    "pre-commit",
+    "fastapi",
+    "uvicorn[standard]",
+]
+
+# --- Tool Configurations ---
+
+[tool.commitizen]
+# This section replaces the need for a separate .cz.toml file.
+name = "cz_conventional_commits"
+tag_format = "$version"
+version_scheme = "semver"
+version = "0.1.0" # This should match the version at the top of the file
+update_changelog_on_bump = true
+major_version_zero = true
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "src"
+]
